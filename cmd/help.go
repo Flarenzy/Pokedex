@@ -2,7 +2,7 @@ package cmd
 
 import "fmt"
 
-func commandHelp() error {
+func commandHelp(config *Config) error {
 	fmt.Print(helpText)
 	return nil
 }

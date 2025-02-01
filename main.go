@@ -21,6 +21,7 @@ func cleanInput(text string) []string {
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	commands := cmd.NewCommands()
+	config := cmd.NewConfig()
 	for {
 		fmt.Print("Pokedex > ")
 		ok := scanner.Scan()
@@ -35,7 +36,7 @@ func main() {
 			if !ok {
 				continue
 			}
-			err := command.Callback()
+			err := command.Callback(config)
 			if err != nil {
 				slog.Error(err.Error())
 				os.Exit(1)
