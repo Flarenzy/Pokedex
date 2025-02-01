@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 )
 
@@ -20,45 +19,65 @@ type LocationArea struct {
 	Results  []Location `json:"results"`
 }
 
-func getLocationArea(url string) (LocationArea, error) {
+func getFromAPI(url string, config *Config) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		slog.Error("Error creating request: ", err)
-		return LocationArea{}, err
+		config.Logger.Error("Error creating request: ", err)
+		return []byte{}, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		slog.Error("Error making request: ", err)
-		return LocationArea{}, err
+		config.Logger.Error("Error making request: ", err)
+		return []byte{}, err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			slog.Error("Error closing body: ", err)
+			config.Logger.Error("Error closing body: ", err)
 			panic("error closing body")
 		}
 	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("Error reading response: ", err)
-		return LocationArea{}, err
+		config.Logger.Error("Error reading response: ", err)
+		return []byte{}, err
 	}
+	return body, nil
+}
+
+func getLocationArea(config *Config, url string) (LocationArea, error) {
+	cachedBody, err := config.cache.Get(url)
+	var body []byte
+	if err != nil {
+		body, err = getFromAPI(url, config)
+		if err != nil {
+			return LocationArea{}, err
+		}
+	} else {
+		body = cachedBody
+	}
+
 	var locationsArea LocationArea
 	err = json.Unmarshal(body, &locationsArea)
 	if err != nil {
-		slog.Error("Error parsing response: ", err)
+		config.Logger.Error("Error parsing response: ", err)
 		return LocationArea{}, err
 	}
 
 	for _, location := range locationsArea.Results {
 		fmt.Println(location.Name)
 	}
+	config.Logger.Info("Adding key to cache: ", url)
+	err1 := config.cache.Add(url, body)
+	if err1 != nil {
+		return LocationArea{}, err1
+	}
 	return locationsArea, nil
 }
 
 func commandMap(config *Config) error {
 	url := config.Next
-	la, err := getLocationArea(url)
+	la, err := getLocationArea(config, url)
 	if err != nil {
 		return err
 	}
@@ -73,9 +92,9 @@ func commandMapb(config *Config) error {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	la, err := getLocationArea(url)
+	la, err := getLocationArea(config, url)
 	if err != nil {
-		slog.Error("Error getting location area: ", err)
+		config.Logger.Error("Error getting location area: ", err)
 		return err
 	}
 	config.Next = la.Next

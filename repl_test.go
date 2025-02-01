@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestName(t *testing.T) {
+func TestCleanInput(t *testing.T) {
 	cases := []struct {
 		input string
 		exp   []string

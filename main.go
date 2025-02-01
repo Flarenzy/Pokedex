@@ -4,9 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/Flarenzy/Pokedex/cmd"
+	"github.com/Flarenzy/Pokedex/internal/logging"
+	"github.com/Flarenzy/Pokedex/internal/pokecache"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 )
 
 func cleanInput(text string) []string {
@@ -21,12 +26,25 @@ func cleanInput(text string) []string {
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	commands := cmd.NewCommands()
-	config := cmd.NewConfig()
+	cache := pokecache.NewCache(50 * time.Second)
+	sigChan := make(chan os.Signal, 1)
+	logLevel := logging.MyHandler{
+		Level: slog.LevelDebug,
+	}
+	logger := logging.NewLogger(logLevel)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		// cleanup
+		cache.Done()
+		os.Exit(0)
+	}()
+	config := cmd.NewConfig(cache, logger)
 	for {
 		fmt.Print("Pokedex > ")
 		ok := scanner.Scan()
 		if !ok {
-			slog.Error("Error scanning input")
+			logger.Error("Error scanning input")
 			break
 		}
 		input := scanner.Text()
@@ -38,11 +56,10 @@ func main() {
 			}
 			err := command.Callback(config)
 			if err != nil {
-				slog.Error(err.Error())
+				logger.Error(err.Error())
 				os.Exit(1)
 			}
 		}
-
 		fmt.Println()
 	}
 }

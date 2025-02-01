@@ -1,3 +1,5 @@
 Pokedex
 .idea
 *.log
+*.txt
+*.out

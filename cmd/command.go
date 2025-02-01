@@ -1,6 +1,10 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/Flarenzy/Pokedex/internal/pokecache"
+	"log/slog"
+)
 
 type CliCommand struct {
 	name        string
@@ -11,12 +15,16 @@ type CliCommand struct {
 type Config struct {
 	Next     string
 	Previous string
+	cache    *pokecache.Cache
+	Logger   *slog.Logger
 }
 
-func NewConfig() *Config {
+func NewConfig(cache *pokecache.Cache, logger *slog.Logger) *Config {
 	return &Config{
 		Next:     "https://pokeapi.co/api/v2/location-area/",
 		Previous: "",
+		cache:    cache,
+		Logger:   logger,
 	}
 }
 
