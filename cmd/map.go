@@ -22,24 +22,24 @@ type LocationArea struct {
 func getFromAPI(url string, config *Config) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		config.Logger.Error("Error creating request: ", err)
+		config.Logger.Error("Error creating request: ", "error", err)
 		return []byte{}, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		config.Logger.Error("Error making request: ", err)
+		config.Logger.Error("Error making request: ", "error", err)
 		return []byte{}, err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			config.Logger.Error("Error closing body: ", err)
+			config.Logger.Error("Error closing body: ", "error", err)
 			panic("error closing body")
 		}
 	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		config.Logger.Error("Error reading response: ", err)
+		config.Logger.Error("Error reading response: ", "error", err)
 		return []byte{}, err
 	}
 	return body, nil
@@ -55,22 +55,25 @@ func getLocationArea(config *Config, url string) (LocationArea, error) {
 		}
 	} else {
 		body = cachedBody
+		config.Logger.Debug("Cache hit", "url", url)
 	}
 
 	var locationsArea LocationArea
 	err = json.Unmarshal(body, &locationsArea)
 	if err != nil {
-		config.Logger.Error("Error parsing response: ", err)
+		config.Logger.Error("Error parsing response: ", "error", err)
 		return LocationArea{}, err
 	}
 
 	for _, location := range locationsArea.Results {
 		fmt.Println(location.Name)
 	}
-	config.Logger.Info("Adding key to cache: ", url)
+	config.Logger.Debug("Adding key to cache: ", "url", url)
 	err1 := config.cache.Add(url, body)
 	if err1 != nil {
-		return LocationArea{}, err1
+		if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
+			return LocationArea{}, err1
+		}
 	}
 	return locationsArea, nil
 }
@@ -94,7 +97,7 @@ func commandMapb(config *Config) error {
 	}
 	la, err := getLocationArea(config, url)
 	if err != nil {
-		config.Logger.Error("Error getting location area: ", err)
+		config.Logger.Error("Error getting location area: ", "error", err)
 		return err
 	}
 	config.Next = la.Next

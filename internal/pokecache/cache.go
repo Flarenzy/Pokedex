@@ -56,7 +56,7 @@ func (c *Cache) Add(key string, val []byte) error {
 		createdAt: time.Now(),
 		val:       val,
 	}
-	//slog.Info("Added key: ", key)
+	//slog.Info("Added key: ", "key", key)
 	return nil
 }
 
