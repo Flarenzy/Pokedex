@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/Flarenzy/Pokedex/cmd"
 	"log/slog"
 	"os"
 	"strings"
@@ -19,6 +20,7 @@ func cleanInput(text string) []string {
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+	commands := cmd.NewCommands()
 	for {
 		fmt.Print("Pokedex > ")
 		ok := scanner.Scan()
@@ -28,10 +30,18 @@ func main() {
 		}
 		input := scanner.Text()
 		clearedInput := cleanInput(input)
-		for _, word := range clearedInput {
-			fmt.Print("Your command was: ", word)
-			break
+		if len(clearedInput) > 0 {
+			command, ok := commands[clearedInput[0]]
+			if !ok {
+				continue
+			}
+			err := command.Callback()
+			if err != nil {
+				slog.Error(err.Error())
+				os.Exit(1)
+			}
 		}
+
 		fmt.Println()
 	}
 }
