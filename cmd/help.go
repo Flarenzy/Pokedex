@@ -1,8 +1,11 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/Flarenzy/Pokedex/internal/config"
+)
 
-func commandHelp(config *Config) error {
+func commandHelp(c *config.Config) error {
 	fmt.Print(helpText)
 	return nil
 }

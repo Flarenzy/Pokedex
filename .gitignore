@@ -3,3 +3,4 @@ Pokedex
 *.log
 *.txt
 *.out
+.DS_Store

@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Flarenzy/Pokedex/internal/config"
 	"os"
 )
 
-func commandExit(config *Config) error {
+func commandExit(c *config.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
-	config.cache.Done()
+	c.Cache.Done()
 	os.Exit(0)
 	return nil
 }

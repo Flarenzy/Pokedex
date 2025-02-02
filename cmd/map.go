@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Flarenzy/Pokedex/internal/config"
 	"io"
 	"net/http"
 )
@@ -19,86 +20,87 @@ type LocationArea struct {
 	Results  []Location `json:"results"`
 }
 
-func getFromAPI(url string, config *Config) ([]byte, error) {
+func getFromAPI(url string, c *config.Config) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		config.Logger.Error("Error creating request: ", "error", err)
+		c.Logger.Error("Error creating request: ", "error", err)
 		return []byte{}, err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		config.Logger.Error("Error making request: ", "error", err)
+		c.Logger.Error("Error making request: ", "error", err)
 		return []byte{}, err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			config.Logger.Error("Error closing body: ", "error", err)
+			c.Logger.Error("Error closing body: ", "error", err)
 			panic("error closing body")
 		}
 	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		config.Logger.Error("Error reading response: ", "url", url, "error", err)
+		c.Logger.Error("Error reading response: ", "url", url, "error", err)
 		return []byte{}, err
 	}
 	return body, nil
 }
 
-func getLocationArea(config *Config, url string) error {
-	cachedBody, err := config.cache.Get(url)
+func getLocationArea(c *config.Config, url string) error {
+	cachedBody, err := c.Cache.Get(url)
 	var body []byte
 	if err != nil {
-		body, err = getFromAPI(url, config)
+		body, err = getFromAPI(url, c)
 		if err != nil {
 			return err
+		}
+		c.Logger.Debug("Adding key to cache: ", "url", url)
+		err1 := c.Cache.Add(url, body)
+		if err1 != nil {
+			if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
+				return err1
+			}
 		}
 	} else {
 		body = cachedBody
 		//fmt.Println("cache hit")
-		config.Logger.Debug("Cache hit", "url", url)
+		c.Logger.Debug("Cache hit", "url", url)
 	}
 
 	var locationsArea LocationArea
 	err = json.Unmarshal(body, &locationsArea)
 	if err != nil {
-		config.Logger.Error("Error parsing response: ", "error", err)
+		c.Logger.Error("Error parsing response: ", "error", err)
 		return err
 	}
 
 	for _, location := range locationsArea.Results {
 		fmt.Println(location.Name)
 	}
-	config.Logger.Debug("Adding key to cache: ", "url", url)
-	err1 := config.cache.Add(url, body)
-	if err1 != nil {
-		if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
-			return err1
-		}
-	}
-	config.Next = locationsArea.Next
-	config.Previous = locationsArea.Previous
+
+	c.Next = locationsArea.Next
+	c.Previous = locationsArea.Previous
 	return nil
 }
 
-func commandMap(config *Config) error {
-	url := config.Next
-	err := getLocationArea(config, url)
+func commandMap(c *config.Config) error {
+	url := c.Next
+	err := getLocationArea(c, url)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func commandMapb(config *Config) error {
-	url := config.Previous
+func commandMapb(c *config.Config) error {
+	url := c.Previous
 	if url == "" {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	err := getLocationArea(config, url)
+	err := getLocationArea(c, url)
 	if err != nil {
-		config.Logger.Error("Error getting location area: ", "error", err)
+		c.Logger.Error("Error getting location area: ", "error", err)
 		return err
 	}
 	return nil

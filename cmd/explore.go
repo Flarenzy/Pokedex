@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Flarenzy/Pokedex/internal"
+	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
 type PokemonInLocation struct {
@@ -53,51 +55,51 @@ type PokemonInLocation struct {
 	} `json:"pokemon_encounters"`
 }
 
-func getPokemonInArea(config *Config, url string) error {
-	cachedBody, err := config.cache.Get(url)
+func getPokemonInArea(c *config.Config, url string) error {
+	cachedBody, err := c.Cache.Get(url)
 	var body []byte
 	if err != nil {
-		body, err = getFromAPI(url, config)
+		body, err = getFromAPI(url, c)
 		if err != nil {
 			return err
 		}
+		err1 := c.Cache.Add(url, body)
+		if err1 != nil {
+			if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
+				return err1
+			}
+		}
 	} else {
 		body = cachedBody
-		config.Logger.Debug("Cache hit", "url", url)
+		c.Logger.Debug("Cache hit", "url", url)
 	}
 	var pokemonInLocation PokemonInLocation
 	err = json.Unmarshal(body, &pokemonInLocation)
 	if err != nil {
-		config.Logger.Error("Error parsing response: ", "error", err)
+		c.Logger.Error("Error parsing response: ", "error", err)
 		return err
 	}
-	for _, pokemon := range pokemonInLocation.PokemonEncounters {
-		fmt.Println(pokemon.Pokemon.Name)
+	for i, pokemon := range pokemonInLocation.PokemonEncounters {
+		fmt.Printf("Pokemon #%v: %v\n", i+1, pokemon.Pokemon.Name)
 	}
-	config.Logger.Debug("Adding key to cache: ", "url", url)
-	err1 := config.cache.Add(url, body)
-	if err1 != nil {
-		if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
-			return err1
-		}
-	}
+	c.Logger.Debug("Adding key to cache: ", "url", url)
 	return nil
 }
 
-func commandExplore(config *Config) error {
-	if len(config.Args) == 0 {
-		config.Logger.Info("No command to explore")
+func commandExplore(c *config.Config) error {
+	if len(c.Args) == 0 {
+		c.Logger.Info("No command to explore")
 		return errors.New("no command to explore")
 	}
 	//wg := sync.WaitGroup{}
-	//wg.Add(len(config.Args))
-	for _, arg := range config.Args {
-		url := firstURL + arg // TODO kako uzeti pokemon area
+	//wg.Add(len(c.Args))
+	for _, arg := range c.Args {
+		url := internal.FirstURL + arg // TODO kako uzeti pokemon area
 		fmt.Println("Exploring area: ", arg)
 		fmt.Println("===================================")
-		err := getPokemonInArea(config, url)
+		err := getPokemonInArea(c, url)
 		if err != nil {
-			config.Logger.Error("Error getting pokemon in area: ", "error", err)
+			c.Logger.Error("Error getting pokemon in area: ", "error", err)
 		}
 		fmt.Println("===================================")
 		fmt.Println()

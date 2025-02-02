@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/Flarenzy/Pokedex/cmd"
+	"github.com/Flarenzy/Pokedex/internal/config"
 	"github.com/Flarenzy/Pokedex/internal/logging"
 	"github.com/Flarenzy/Pokedex/internal/pokecache"
+	"github.com/Flarenzy/Pokedex/internal/pokedex"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -27,6 +29,8 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	commands := cmd.NewCommands()
 	cache := pokecache.NewCache(50 * time.Second)
+	myPokedex := pokedex.NewPokedex()
+
 	sigChan := make(chan os.Signal, 1)
 	logLevel := logging.MyHandler{
 		Level: slog.LevelDebug,
@@ -40,7 +44,7 @@ func main() {
 		cache.Done()
 		os.Exit(0)
 	}()
-	config := cmd.NewConfig(cache, logger)
+	c := config.NewConfig(cache, logger, myPokedex)
 	for {
 		fmt.Print("Pokedex > ")
 		ok := scanner.Scan()
@@ -57,12 +61,12 @@ func main() {
 				for _, arg := range clearedInput[1:] {
 					args = append(args, arg)
 				}
-				config.Args = args
+				c.Args = args
 			}
 			if !ok {
 				continue
 			}
-			err := command.Callback(config)
+			err := command.Callback(c)
 			if err != nil {
 				logger.Error(err.Error())
 			}

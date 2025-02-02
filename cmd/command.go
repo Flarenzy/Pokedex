@@ -2,33 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Flarenzy/Pokedex/internal/pokecache"
-	"log/slog"
+	"github.com/Flarenzy/Pokedex/internal/config"
 )
-
-const firstURL = "https://pokeapi.co/api/v2/location-area/"
 
 type CliCommand struct {
 	name        string
 	description string
-	Callback    func(config *Config) error
-}
-
-type Config struct {
-	Next     string
-	Previous string
-	Args     []string
-	cache    *pokecache.Cache
-	Logger   *slog.Logger
-}
-
-func NewConfig(cache *pokecache.Cache, logger *slog.Logger) *Config {
-	return &Config{
-		Next:     firstURL,
-		Previous: "",
-		cache:    cache,
-		Logger:   logger,
-	}
+	Callback    func(c *config.Config) error
 }
 
 var helpText = `
@@ -44,6 +24,7 @@ func NewCommands() map[string]*CliCommand {
 	commands["map"] = newMapCommand()
 	commands["mapb"] = newMapbCommand()
 	commands["explore"] = newExploreCommand()
+	commands["catch"] = newCatchCommand()
 	for k, v := range commands {
 		helpText += fmt.Sprintf("%s: %s\n", k, v.description)
 	}
