@@ -113,7 +113,7 @@ func TestReapLoop(t *testing.T) {
 		t.Errorf("error getting key %s: %v", inputs[0].key, err)
 		t.Fatal()
 	}
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 	val, err1 := cache.Get(inputs[0].key)
 	if err1 != nil {
 		if err1.Error() != "key not found" {

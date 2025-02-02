@@ -33,6 +33,7 @@ func main() {
 	}
 	logger := logging.NewLogger(logLevel)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	//wg := &sync.WaitGroup{}
 	go func() {
 		<-sigChan
 		// cleanup
@@ -51,13 +52,19 @@ func main() {
 		clearedInput := cleanInput(input)
 		if len(clearedInput) > 0 {
 			command, ok := commands[clearedInput[0]]
+			if len(clearedInput) > 1 {
+				var args []string
+				for _, arg := range clearedInput[1:] {
+					args = append(args, arg)
+				}
+				config.Args = args
+			}
 			if !ok {
 				continue
 			}
 			err := command.Callback(config)
 			if err != nil {
 				logger.Error(err.Error())
-				os.Exit(1)
 			}
 		}
 		fmt.Println()

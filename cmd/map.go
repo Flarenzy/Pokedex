@@ -39,22 +39,23 @@ func getFromAPI(url string, config *Config) ([]byte, error) {
 	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		config.Logger.Error("Error reading response: ", "error", err)
+		config.Logger.Error("Error reading response: ", "url", url, "error", err)
 		return []byte{}, err
 	}
 	return body, nil
 }
 
-func getLocationArea(config *Config, url string) (LocationArea, error) {
+func getLocationArea(config *Config, url string) error {
 	cachedBody, err := config.cache.Get(url)
 	var body []byte
 	if err != nil {
 		body, err = getFromAPI(url, config)
 		if err != nil {
-			return LocationArea{}, err
+			return err
 		}
 	} else {
 		body = cachedBody
+		//fmt.Println("cache hit")
 		config.Logger.Debug("Cache hit", "url", url)
 	}
 
@@ -62,7 +63,7 @@ func getLocationArea(config *Config, url string) (LocationArea, error) {
 	err = json.Unmarshal(body, &locationsArea)
 	if err != nil {
 		config.Logger.Error("Error parsing response: ", "error", err)
-		return LocationArea{}, err
+		return err
 	}
 
 	for _, location := range locationsArea.Results {
@@ -72,20 +73,20 @@ func getLocationArea(config *Config, url string) (LocationArea, error) {
 	err1 := config.cache.Add(url, body)
 	if err1 != nil {
 		if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
-			return LocationArea{}, err1
+			return err1
 		}
 	}
-	return locationsArea, nil
+	config.Next = locationsArea.Next
+	config.Previous = locationsArea.Previous
+	return nil
 }
 
 func commandMap(config *Config) error {
 	url := config.Next
-	la, err := getLocationArea(config, url)
+	err := getLocationArea(config, url)
 	if err != nil {
 		return err
 	}
-	config.Next = la.Next
-	config.Previous = la.Previous
 	return nil
 }
 
@@ -95,17 +96,15 @@ func commandMapb(config *Config) error {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	la, err := getLocationArea(config, url)
+	err := getLocationArea(config, url)
 	if err != nil {
 		config.Logger.Error("Error getting location area: ", "error", err)
 		return err
 	}
-	config.Next = la.Next
-	config.Previous = la.Previous
 	return nil
 }
 
-func NewMapCommand() *CliCommand {
+func newMapCommand() *CliCommand {
 	return &CliCommand{
 		name:        "map",
 		description: "Display the next location of a map",
@@ -113,7 +112,7 @@ func NewMapCommand() *CliCommand {
 	}
 }
 
-func NewMapbCommand() *CliCommand {
+func newMapbCommand() *CliCommand {
 	return &CliCommand{
 		name:        "mapb",
 		description: "Display the previous location of a map",
