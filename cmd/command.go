@@ -25,6 +25,8 @@ func NewCommands() map[string]*CliCommand {
 	commands["mapb"] = newMapbCommand()
 	commands["explore"] = newExploreCommand()
 	commands["catch"] = newCatchCommand()
+	commands["inspect"] = newInspectCommand()
+	commands["pokedex"] = newPokedexCommand()
 	for k, v := range commands {
 		helpText += fmt.Sprintf("%s: %s\n", k, v.description)
 	}

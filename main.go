@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	//"bytes"
 	"fmt"
 	"github.com/Flarenzy/Pokedex/cmd"
 	"github.com/Flarenzy/Pokedex/internal/config"
@@ -37,6 +38,8 @@ func main() {
 	}
 	logger := logging.NewLogger(logLevel)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	//usedCommands := []string{}
+	//curCommand := 0
 	//wg := &sync.WaitGroup{}
 	go func() {
 		<-sigChan
@@ -46,13 +49,33 @@ func main() {
 	}()
 	c := config.NewConfig(cache, logger, myPokedex)
 	for {
+		// ^[[A - up
+		// ^[[B - down
 		fmt.Print("Pokedex > ")
 		ok := scanner.Scan()
 		if !ok {
 			logger.Error("Error scanning input")
 			break
 		}
+
 		input := scanner.Text()
+		// TODO: basic console up and down
+		//if bytes.Equal([]byte(input), []byte("^[[A")) {
+		//	if curCommand-1 > 0 {
+		//		fmt.Print("\r \r")
+		//		fmt.Print(usedCommands[curCommand-1])
+		//		curCommand -= 1
+		//	}
+		//	continue
+		//} else if bytes.Equal([]byte(input), []byte("^[[B")) {
+		//	if curCommand+1 < len(usedCommands) {
+		//		fmt.Print("\r \r")
+		//		fmt.Print(usedCommands[curCommand+1])
+		//		curCommand += 1
+		//	}
+		//	continue
+		//}
+
 		clearedInput := cleanInput(input)
 		if len(clearedInput) > 0 {
 			command, ok := commands[clearedInput[0]]
@@ -72,5 +95,7 @@ func main() {
 			}
 		}
 		fmt.Println()
+		//usedCommands = append(usedCommands, input)
+		//curCommand = len(usedCommands) - 1
 	}
 }

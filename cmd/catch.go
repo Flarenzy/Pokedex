@@ -319,6 +319,8 @@ func getPokemon(c *config.Config, url string) error {
 			Order:          pokemonFromAPI.Order,
 			Weight:         pokemonFromAPI.Weight,
 			Abilities:      pokemonFromAPI.Abilities,
+			Stats:          pokemonFromAPI.Stats,
+			Types:          pokemonFromAPI.Types,
 		}
 		c.Pokedex.Add(caughtPokemon)
 		fmt.Println(caughtPokemon.Name, "was caught!")
