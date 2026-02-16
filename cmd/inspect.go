@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
@@ -15,7 +16,11 @@ func commandInspect(c *config.Config) error {
 		p, err := c.Pokedex.GetPokemonByName(arg)
 		if err != nil {
 			if err.Error() == "pokemon not found" {
-				fmt.Printf("you have not caught that pokemon")
+				_, err = fmt.Fprintf(c.Out, "you have not caught that pokemon")
+				if err != nil {
+					c.Logger.Error("Error writing response: ", "error", err)
+					return err
+				}
 				c.Logger.Error("You have not caught that pokemon", "err", err)
 				return nil
 			} else {
@@ -23,14 +28,31 @@ func commandInspect(c *config.Config) error {
 			}
 		}
 		c.Logger.Debug("Printing info about pokemon: ", "name", p.Name)
-		fmt.Printf("Name: %v\nHeight: %v\nWeight: %v\n", p.Name, p.Height, p.Weight)
-		fmt.Println("Stats:")
-		for _, stat := range p.Stats {
-			fmt.Printf("  -%v: %v\n", stat.Stat.Name, stat.BaseStat)
+		_, err = fmt.Fprintf(c.Out, "Name: %v\nHeight: %v\nWeight: %v\n", p.Name, p.Height, p.Weight)
+		if err != nil {
+			return err
 		}
-		fmt.Println("Types:")
+		_, err = fmt.Fprintln(c.Out, "Stats:")
+		if err != nil {
+			return err
+		}
+		for _, stat := range p.Stats {
+			_, err = fmt.Fprintf(c.Out, "  -%v: %v\n", stat.Stat.Name, stat.BaseStat)
+			if err != nil {
+				c.Logger.Error("Error writing response: ", "error", err)
+				return err
+			}
+		}
+		_, err = fmt.Fprintln(c.Out, "Types:")
+		if err != nil {
+			return err
+		}
 		for _, t := range p.Types {
-			fmt.Printf("  -%v\n", t.Type.Name)
+			_, err = fmt.Fprintf(c.Out, "  -%v\n", t.Type.Name)
+			if err != nil {
+				c.Logger.Error("Error writing response: ", "error", err)
+				return err
+			}
 		}
 	}
 	return nil

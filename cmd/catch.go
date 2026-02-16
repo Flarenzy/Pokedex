@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/config"
 	"github.com/Flarenzy/Pokedex/internal/pokedex"
-	"math/rand"
 )
 
 type PokemonFromAPI struct {
@@ -309,7 +308,7 @@ func getPokemon(c *config.Config, url string) error {
 	}
 	baseChance := 100.0
 	chanceToCatch := baseChance / (float64(pokemonFromAPI.BaseExperience) + baseChance)
-	if rand.Float64() < chanceToCatch {
+	if c.RandFloat64() < chanceToCatch {
 		caughtPokemon := pokedex.Pokemon{
 			Id:             pokemonFromAPI.Id,
 			Name:           pokemonFromAPI.Name,
@@ -323,9 +322,17 @@ func getPokemon(c *config.Config, url string) error {
 			Types:          pokemonFromAPI.Types,
 		}
 		c.Pokedex.Add(caughtPokemon)
-		fmt.Println(caughtPokemon.Name, "was caught!")
+		_, err = fmt.Fprintln(c.Out, caughtPokemon.Name, "was caught!")
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "url", url, "error", err)
+			return err
+		}
 	} else {
-		fmt.Println(pokemonFromAPI.Name, "escaped!")
+		_, err = fmt.Fprintln(c.Out, pokemonFromAPI.Name, "escaped!")
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "url", url, "error", err)
+			return err
+		}
 	}
 
 	return nil
@@ -334,17 +341,24 @@ func getPokemon(c *config.Config, url string) error {
 func commandCatch(c *config.Config) error {
 	if len(c.Args) == 0 {
 		c.Logger.Info("No pokemon to catch")
-		return errors.New("no pokemon to catch")
+		return ErrNoPokemon
 	}
 	for _, arg := range c.Args {
 		url := internal.SecondURL + arg
-		fmt.Printf("Throwing a Pokeball at %v...", arg)
-		fmt.Println()
-		err := getPokemon(c, url)
+		_, err := fmt.Fprintf(c.Out, "Throwing a Pokeball at %v...\n", arg)
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "url", url, "error", err)
+			return err
+		}
+		err = getPokemon(c, url)
 		if err != nil {
 			c.Logger.Error("Error getting pokemon in area: ", "error", err)
 		}
-		fmt.Println()
+		_, err = fmt.Fprintln(c.Out, "")
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "url", url, "error", err)
+			return err
+		}
 	}
 	return nil
 }

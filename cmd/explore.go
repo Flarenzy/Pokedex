@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/config"
 )
@@ -80,7 +81,11 @@ func getPokemonInArea(c *config.Config, url string) error {
 		return err
 	}
 	for i, pokemon := range pokemonInLocation.PokemonEncounters {
-		fmt.Printf("Pokemon #%v: %v\n", i+1, pokemon.Pokemon.Name)
+		_, err = fmt.Fprintf(c.Out, "Pokemon #%v: %v\n", i+1, pokemon.Pokemon.Name)
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "error", err)
+			return err
+		}
 	}
 	c.Logger.Debug("Adding key to cache: ", "url", url)
 	return nil
@@ -91,18 +96,28 @@ func commandExplore(c *config.Config) error {
 		c.Logger.Info("No command to explore")
 		return errors.New("no command to explore")
 	}
-	//wg := sync.WaitGroup{}
-	//wg.Add(len(c.Args))
 	for _, arg := range c.Args {
 		url := internal.FirstURL + arg // TODO kako uzeti pokemon area
-		fmt.Println("Exploring area: ", arg)
-		fmt.Println("===================================")
-		err := getPokemonInArea(c, url)
+		_, err := fmt.Fprintln(c.Out, "Exploring area: ", arg)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(c.Out, "===================================")
+		if err != nil {
+			return err
+		}
+		err = getPokemonInArea(c, url)
 		if err != nil {
 			c.Logger.Error("Error getting pokemon in area: ", "error", err)
 		}
-		fmt.Println("===================================")
-		fmt.Println()
+		_, err = fmt.Fprintln(c.Out, "===================================")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(c.Out)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

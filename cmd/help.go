@@ -2,11 +2,16 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
 func commandHelp(c *config.Config) error {
-	fmt.Print(helpText)
+	_, err := fmt.Fprintln(c.Out, helpText)
+	if err != nil {
+		c.Logger.Error("unable to write help message", "error", err.Error())
+		return err
+	}
 	return nil
 }
 

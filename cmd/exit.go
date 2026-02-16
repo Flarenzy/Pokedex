@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal/config"
-	"os"
 )
 
 func commandExit(c *config.Config) error {
-	fmt.Println("Closing the Pokedex... Goodbye!")
-	c.Cache.Done()
-	os.Exit(0)
-	return nil
+	_, err := fmt.Fprintln(c.Out, "Closing the Pokedex... Goodbye!")
+	if err != nil {
+		c.Logger.Error("unable to close the Pokedex", "error", err)
+		return err
+	}
+	return ErrStop
 }
 
 func newExitCommand() *CliCommand {

@@ -3,9 +3,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Flarenzy/Pokedex/internal/config"
 	"io"
 	"net/http"
+
+	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
 type Location struct {
@@ -26,13 +27,13 @@ func getFromAPI(url string, c *config.Config) ([]byte, error) {
 		c.Logger.Error("Error creating request: ", "error", err)
 		return []byte{}, err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		c.Logger.Error("Error making request: ", "error", err)
 		return []byte{}, err
 	}
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+		err = Body.Close()
 		if err != nil {
 			c.Logger.Error("Error closing body: ", "error", err)
 			panic("error closing body")
@@ -63,7 +64,6 @@ func getLocationArea(c *config.Config, url string) error {
 		}
 	} else {
 		body = cachedBody
-		//fmt.Println("cache hit")
 		c.Logger.Debug("Cache hit", "url", url)
 	}
 
@@ -75,7 +75,11 @@ func getLocationArea(c *config.Config, url string) error {
 	}
 
 	for _, location := range locationsArea.Results {
-		fmt.Println(location.Name)
+		_, err = fmt.Fprintln(c.Out, location.Name)
+		if err != nil {
+			c.Logger.Error("Error writing response: ", "url", url, "error", err)
+			return err
+		}
 	}
 
 	c.Next = locationsArea.Next
@@ -95,7 +99,11 @@ func commandMap(c *config.Config) error {
 func commandMapb(c *config.Config) error {
 	url := c.Previous
 	if url == "" {
-		fmt.Println("you're on the first page")
+		_, err := fmt.Fprintln(c.Out, "you're on the first page")
+		if err != nil {
+			c.Logger.Error("Error getting response: ", "error", err)
+			return err
+		}
 		return nil
 	}
 	err := getLocationArea(c, url)

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
@@ -10,9 +11,17 @@ func commandPokedex(c *config.Config) error {
 	if len(allPokemon) == 0 {
 		return fmt.Errorf("no Pokedex found")
 	}
-	fmt.Println("Your Pokedex:")
+	_, err := fmt.Fprintln(c.Out, "Your Pokedex:")
+	if err != nil {
+		c.Logger.Error("Failed to write to output", "error", err)
+		return err
+	}
 	for _, pokemon := range allPokemon {
-		fmt.Printf("  - %v\n", pokemon.Name)
+		_, err = fmt.Fprintf(c.Out, "  - %v\n", pokemon.Name)
+		if err != nil {
+			c.Logger.Error("Failed to write to output", "error", err)
+			return err
+		}
 	}
 	return nil
 }
