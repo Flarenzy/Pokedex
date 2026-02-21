@@ -59,6 +59,13 @@ func main() {
 	httpClient := internalHTTP.NewDefaultHTTPClient()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	c := config.NewConfig(cache, logger, myPokedex, httpClient, r.Float64)
+	if areaURL := os.Getenv("POKEDEX_AREA_URL"); areaURL != "" {
+		c.AreaURL = areaURL
+		c.Next = areaURL
+	}
+	if pokemonURL := os.Getenv("POKEDEX_POKEMON_URL"); pokemonURL != "" {
+		c.PokemonURL = pokemonURL
+	}
 	if err = run.Run(c, rl, commands); err != nil {
 		c.Logger.Error(err.Error())
 		os.Exit(1)

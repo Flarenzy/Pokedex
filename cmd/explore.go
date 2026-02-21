@@ -83,7 +83,11 @@ func commandExplore(c *config.Config) error {
 		return ErrNoAreaToExplore
 	}
 	for _, arg := range c.Args {
-		url := internal.FirstURL + arg // TODO kako uzeti pokemon area
+		baseURL := c.AreaURL
+		if baseURL == "" {
+			baseURL = internal.FirstURL
+		}
+		url := baseURL + arg
 		_, err := fmt.Fprintln(c.Out, "Exploring area: ", arg)
 		if err != nil {
 			return err
