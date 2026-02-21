@@ -9,9 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test:
-    name: Run Go Tests
+    name: Run Go Tests And Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -24,5 +27,59 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Run Tests
-        run: go test ./...
+      - name: Run Tests With Coverage
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Coverage Summary
+        run: |
+          go tool cover -func=coverage.out | tee coverage.txt
+          total_line="$(tail -n 1 coverage.txt)"
+          total_pct="$(echo "$total_line" | awk '{print $3}')"
+          {
+            echo "## Coverage"
+            echo ""
+            echo "- Total statement coverage: **${total_pct}**"
+            echo ""
+            echo "```text"
+            cat coverage.txt
+            echo "```"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create Coverage Badge JSON
+        run: |
+          mkdir -p .badges
+          total_pct="$(tail -n 1 coverage.txt | awk '{print $3}')"
+          numeric="${total_pct%%%}"
+          color="red"
+          awk "BEGIN{exit !($numeric >= 90)}" && color="brightgreen" || true
+          if [ "$color" = "red" ]; then
+            awk "BEGIN{exit !($numeric >= 75)}" && color="yellow" || true
+          fi
+          if [ "$color" = "red" ]; then
+            awk "BEGIN{exit !($numeric >= 60)}" && color="orange" || true
+          fi
+          cat > .badges/coverage-badge.json <<EOF
+          {
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "${total_pct}",
+            "color": "${color}"
+          }
+          EOF
+
+      - name: Publish Coverage Badge Branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: badges
+          publish_dir: .badges
+          force_orphan: true
+
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.out
+            coverage.txt
