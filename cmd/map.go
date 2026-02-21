@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/Flarenzy/Pokedex/internal/config"
+	"github.com/Flarenzy/Pokedex/internal/pokecache"
 )
 
 type Location struct {
@@ -58,7 +60,7 @@ func getLocationArea(c *config.Config, url string) error {
 		c.Logger.Debug("Adding key to cache: ", "url", url)
 		err1 := c.Cache.Add(url, body)
 		if err1 != nil {
-			if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
+			if !errors.Is(err1, pokecache.ErrKeyExists) {
 				return err1
 			}
 		}

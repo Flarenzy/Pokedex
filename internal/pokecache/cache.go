@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+var (
+	ErrKeyNotFound = errors.New("key not found")
+	ErrKeyExists   = errors.New("key already exists")
+)
+
 type cacheEntry struct {
 	createdAt time.Time
 	val       []byte
@@ -39,7 +44,7 @@ func (c *Cache) Get(key string) ([]byte, error) {
 	entry, ok := c.Cached[key]
 	if !ok {
 		//slog.Error("Key not found: ", key)
-		return nil, errors.New("key not found")
+		return nil, fmt.Errorf("%w: %s", ErrKeyNotFound, key)
 	}
 	return entry.val, nil
 }
@@ -50,7 +55,7 @@ func (c *Cache) Add(key string, val []byte) error {
 	slog.Debug("Adding key: ", key, string(val))
 	if _, ok := c.Cached[key]; ok {
 		//slog.Debug("Key already exists: ", key)
-		return errors.New(fmt.Sprintf("key already exists: %v", key))
+		return fmt.Errorf("%w: %s", ErrKeyExists, key)
 	}
 	c.Cached[key] = cacheEntry{
 		createdAt: time.Now(),

@@ -7,16 +7,23 @@ import (
 
 	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/http"
-	"github.com/Flarenzy/Pokedex/internal/pokecache"
 	"github.com/Flarenzy/Pokedex/internal/pokedex"
 )
+
+type Cacher interface {
+	Get(key string) ([]byte, error)
+	Add(key string, val []byte) error
+	Done()
+}
 
 type Config struct {
 	Next        string
 	Previous    string
+	AreaURL     string
+	PokemonURL  string
 	Args        []string
 	Pokedex     *pokedex.Pokedex
-	Cache       *pokecache.Cache
+	Cache       Cacher
 	Logger      *slog.Logger
 	Out         io.Writer
 	HTTPClient  http.HTTPClienter
@@ -24,7 +31,7 @@ type Config struct {
 }
 
 func NewConfig(
-	cache *pokecache.Cache,
+	cache Cacher,
 	logger *slog.Logger,
 	p *pokedex.Pokedex,
 	client http.HTTPClienter,
@@ -33,6 +40,8 @@ func NewConfig(
 	return &Config{
 		Next:        internal.FirstURL,
 		Previous:    "",
+		AreaURL:     internal.FirstURL,
+		PokemonURL:  internal.SecondURL,
 		Args:        []string{},
 		Cache:       cache,
 		Logger:      logger,

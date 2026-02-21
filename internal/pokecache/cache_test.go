@@ -2,6 +2,8 @@ package pokecache
 
 import (
 	"bytes"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -59,8 +61,12 @@ func TestEmptyCache(t *testing.T) {
 		t.Errorf("expected nil, got %v", v)
 		t.Fatal()
 	}
-	if err.Error() != "key not found" {
-		t.Errorf("expected key not found, got %s", err.Error())
+	if !errors.Is(err, ErrKeyNotFound) {
+		t.Errorf("expected ErrKeyNotFound, got %v", err)
+		t.Fatal()
+	}
+	if !strings.Contains(err.Error(), "Random Key") {
+		t.Errorf("expected key in error, got %s", err.Error())
 		t.Fatal()
 	}
 }
@@ -83,8 +89,8 @@ func TestDoubleEntry(t *testing.T) {
 	}
 	err1 := cache.Add(inputs[1].key, inputs[1].val)
 	if err1 != nil {
-		if err1.Error() != "key already exists: https://pokeapi.co/api/v2/location-area/" {
-			t.Errorf("Expected key already exists, got %s", err1.Error())
+		if !errors.Is(err1, ErrKeyExists) {
+			t.Errorf("expected ErrKeyExists, got %v", err1)
 			t.Fatal()
 		}
 	}
@@ -116,8 +122,8 @@ func TestReapLoop(t *testing.T) {
 	time.Sleep(4 * time.Second)
 	val, err1 := cache.Get(inputs[0].key)
 	if err1 != nil {
-		if err1.Error() != "key not found" {
-			t.Errorf("Expected key not found, got %s", err1.Error())
+		if !errors.Is(err1, ErrKeyNotFound) {
+			t.Errorf("expected ErrKeyNotFound, got %v", err1)
 			t.Fatal()
 		}
 	}

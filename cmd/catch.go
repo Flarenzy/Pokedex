@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/config"
+	"github.com/Flarenzy/Pokedex/internal/pokecache"
 	"github.com/Flarenzy/Pokedex/internal/pokedex"
 )
 
@@ -292,7 +293,7 @@ func getPokemon(c *config.Config, url string) error {
 		c.Logger.Debug("Adding key to cache: ", "url", url)
 		err1 := c.Cache.Add(url, body)
 		if err1 != nil {
-			if err1.Error() != fmt.Sprintf("key already exists: %v", url) {
+			if !errors.Is(err1, pokecache.ErrKeyExists) {
 				return err1
 			}
 		}
@@ -344,7 +345,7 @@ func commandCatch(c *config.Config) error {
 		return ErrNoPokemon
 	}
 	for _, arg := range c.Args {
-		url := internal.SecondURL + arg
+		url := c.PokemonURL + arg
 		_, err := fmt.Fprintf(c.Out, "Throwing a Pokeball at %v...\n", arg)
 		if err != nil {
 			c.Logger.Error("Error writing response: ", "url", url, "error", err)
