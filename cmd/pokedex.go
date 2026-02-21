@@ -9,7 +9,7 @@ import (
 func commandPokedex(c *config.Config) error {
 	allPokemon := c.Pokedex.GetAllPokemon()
 	if len(allPokemon) == 0 {
-		return fmt.Errorf("no Pokedex found")
+		return ErrEmptyPokedex
 	}
 	_, err := fmt.Fprintln(c.Out, "Your Pokedex:")
 	if err != nil {

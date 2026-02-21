@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/Flarenzy/Pokedex/internal/config"
 )
 
@@ -11,11 +13,13 @@ type CliCommand struct {
 	Callback    func(c *config.Config) error
 }
 
-var helpText = `
+const helpTextBase = `
 Welcome to the Pokedex!
 Usage:
 
 `
+
+var helpText = helpTextBase
 
 func NewCommands() map[string]*CliCommand {
 	commands := make(map[string]*CliCommand)
@@ -27,8 +31,16 @@ func NewCommands() map[string]*CliCommand {
 	commands["catch"] = newCatchCommand()
 	commands["inspect"] = newInspectCommand()
 	commands["pokedex"] = newPokedexCommand()
-	for k, v := range commands {
-		helpText += fmt.Sprintf("%s: %s\n", k, v.description)
+
+	keys := make([]string, 0, len(commands))
+	for key := range commands {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	helpText = helpTextBase
+	for _, key := range keys {
+		helpText += fmt.Sprintf("%s: %s\n", key, commands[key].description)
 	}
 	return commands
 }

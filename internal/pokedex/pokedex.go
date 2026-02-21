@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+var ErrPokemonNotFound = errors.New("pokemon not found")
+
 type Pokemon struct {
 	Id             int    `json:"id"`
 	Name           string `json:"name"`
@@ -83,7 +85,7 @@ func (p *Pokedex) GetPokemonByName(name string) (Pokemon, error) {
 			return pokemon, nil
 		}
 	}
-	return Pokemon{}, errors.New("pokemon not found")
+	return Pokemon{}, ErrPokemonNotFound
 }
 
 func NewPokedex() *Pokedex {

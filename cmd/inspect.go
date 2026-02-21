@@ -5,17 +5,18 @@ import (
 	"fmt"
 
 	"github.com/Flarenzy/Pokedex/internal/config"
+	"github.com/Flarenzy/Pokedex/internal/pokedex"
 )
 
 func commandInspect(c *config.Config) error {
 	if len(c.Args) == 0 {
 		c.Logger.Info("No pokemon to inspect")
-		return errors.New("no pokemon to inspect")
+		return ErrNoPokemonToInspect
 	}
 	for _, arg := range c.Args {
 		p, err := c.Pokedex.GetPokemonByName(arg)
 		if err != nil {
-			if err.Error() == "pokemon not found" {
+			if errors.Is(err, pokedex.ErrPokemonNotFound) {
 				_, err = fmt.Fprintf(c.Out, "you have not caught that pokemon")
 				if err != nil {
 					c.Logger.Error("Error writing response: ", "error", err)

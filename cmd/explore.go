@@ -95,7 +95,7 @@ func getPokemonInArea(c *config.Config, url string) error {
 func commandExplore(c *config.Config) error {
 	if len(c.Args) == 0 {
 		c.Logger.Info("No command to explore")
-		return errors.New("no command to explore")
+		return ErrNoAreaToExplore
 	}
 	for _, arg := range c.Args {
 		url := internal.FirstURL + arg // TODO kako uzeti pokemon area
