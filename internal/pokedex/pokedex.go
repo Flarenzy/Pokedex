@@ -40,13 +40,6 @@ type Pokemon struct {
 	} `json:"types"`
 }
 
-type Pokedexer interface {
-	Add(p Pokemon)
-	Remove(p Pokemon)
-	GetAllPokemon() []Pokemon
-	GetPokemonByName(name string) Pokemon
-}
-
 type Pokedex struct {
 	Owned map[string]Pokemon
 	mu    sync.RWMutex

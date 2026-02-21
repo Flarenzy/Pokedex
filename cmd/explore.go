@@ -2,12 +2,10 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/config"
-	"github.com/Flarenzy/Pokedex/internal/pokecache"
 )
 
 type PokemonInLocation struct {
@@ -58,22 +56,9 @@ type PokemonInLocation struct {
 }
 
 func getPokemonInArea(c *config.Config, url string) error {
-	cachedBody, err := c.Cache.Get(url)
-	var body []byte
+	body, err := getBodyWithCache(c, url)
 	if err != nil {
-		body, err = getFromAPI(url, c)
-		if err != nil {
-			return err
-		}
-		err1 := c.Cache.Add(url, body)
-		if err1 != nil {
-			if !errors.Is(err1, pokecache.ErrKeyExists) {
-				return err1
-			}
-		}
-	} else {
-		body = cachedBody
-		c.Logger.Debug("Cache hit", "url", url)
+		return err
 	}
 	var pokemonInLocation PokemonInLocation
 	err = json.Unmarshal(body, &pokemonInLocation)

@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/Flarenzy/Pokedex/internal/config"
-	"github.com/Flarenzy/Pokedex/internal/pokecache"
 	"github.com/Flarenzy/Pokedex/internal/pokedex"
 )
 
@@ -283,23 +281,9 @@ type PokemonFromAPI struct {
 }
 
 func getPokemon(c *config.Config, url string) error {
-	cachedBody, err := c.Cache.Get(url)
-	var body []byte
+	body, err := getBodyWithCache(c, url)
 	if err != nil {
-		body, err = getFromAPI(url, c)
-		if err != nil {
-			return err
-		}
-		c.Logger.Debug("Adding key to cache: ", "url", url)
-		err1 := c.Cache.Add(url, body)
-		if err1 != nil {
-			if !errors.Is(err1, pokecache.ErrKeyExists) {
-				return err1
-			}
-		}
-	} else {
-		body = cachedBody
-		c.Logger.Debug("Cache hit", "url", url)
+		return err
 	}
 	var pokemonFromAPI PokemonFromAPI
 	err = json.Unmarshal(body, &pokemonFromAPI)

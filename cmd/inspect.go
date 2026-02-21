@@ -24,9 +24,9 @@ func commandInspect(c *config.Config) error {
 				}
 				c.Logger.Error("You have not caught that pokemon", "err", err)
 				return nil
-			} else {
-				return err
 			}
+			c.Logger.Error("Error writing response: ", "error", err)
+			return err
 		}
 		c.Logger.Debug("Printing info about pokemon: ", "name", p.Name)
 		_, err = fmt.Fprintf(c.Out, "Name: %v\nHeight: %v\nWeight: %v\n", p.Name, p.Height, p.Weight)

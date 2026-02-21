@@ -7,8 +7,6 @@ import (
 
 	"github.com/Flarenzy/Pokedex/internal"
 	"github.com/Flarenzy/Pokedex/internal/domain"
-	"github.com/Flarenzy/Pokedex/internal/http"
-	"github.com/Flarenzy/Pokedex/internal/pokedex"
 )
 
 type Config struct {
@@ -17,19 +15,19 @@ type Config struct {
 	AreaURL     string
 	PokemonURL  string
 	Args        []string
-	Pokedex     *pokedex.Pokedex
+	Pokedex     domain.Pokedexer
 	Cache       domain.Cacher
 	Logger      *slog.Logger
 	Out         io.Writer
-	HTTPClient  http.HTTPClienter
+	HTTPClient  domain.HTTPClient
 	RandFloat64 func() float64
 }
 
 func NewConfig(
 	cache domain.Cacher,
 	logger *slog.Logger,
-	p *pokedex.Pokedex,
-	client http.HTTPClienter,
+	p domain.Pokedexer,
+	client domain.HTTPClient,
 	randFloat64 func() float64,
 ) *Config {
 	return &Config{

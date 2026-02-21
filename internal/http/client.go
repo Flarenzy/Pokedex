@@ -2,9 +2,9 @@ package http
 
 import "net/http"
 
-type HTTPClienter interface {
-	Do(req *http.Request) (*http.Response, error)
-}
+import "github.com/Flarenzy/Pokedex/internal/domain"
+
+type HTTPClienter = domain.HTTPClient
 
 type DefaultHTTPClient struct {
 	c *http.Client
