@@ -1,6 +1,6 @@
 module github.com/Flarenzy/Pokedex
 
-go 1.23.5
+go 1.26.0
 
 require github.com/chzyer/readline v1.5.1
 
